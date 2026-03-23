@@ -1,5 +1,7 @@
 # HeyPico.ai — Code Test 2: AI Maps Assistant
 
+![HeyPico App Screenshot](application.png)
+
 A **local-LLM-powered** chat assistant that uses **Google Maps API** to find and display places with interactive embedded maps. Built with FastAPI (Python) + Ollama + Google Maps (Text Search & Embed APIs).
 
 ---
