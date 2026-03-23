@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Maps Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .assistant-msg iframe {
+            margin-top: 10px;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+        .prose a {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl h-[90vh] flex flex-col">
+        <h1 class="text-2xl font-bold mb-4 text-gray-800 text-center">🗺️ AI Maps Assistant</h1>
+        
+        <div id="chat-box" class="flex-1 overflow-y-auto mb-4 p-4 border rounded-lg bg-gray-50 flex flex-col space-y-4">
+            <div class="flex items-start message assistant-msg">
+                <div class="bg-blue-100 text-blue-900 p-3 rounded-lg max-w-[95%] prose">
+                    Hello! Ask me where to find places to go or eat!
+                </div>
+            </div>
+        </div>
+
+        <div class="flex">
+            <input type="text" id="user-input" placeholder="e.g. Find me a good coffee shop in Batam" 
+                class="flex-1 border p-3 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button onclick="sendMessage()" id="send-btn"
+                class="bg-blue-600 text-white p-3 rounded-r-lg hover:bg-blue-700 font-semibold px-6 transition">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        userInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessageToUI(message, 'user-msg', 'bg-gray-800 text-white self-end');
+            userInput.value = '';
+            
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = 'Thinking...';
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+                
+                addMessageToUI(data.reply, 'assistant-msg', 'bg-blue-100 text-blue-900 self-start', true);
+            } catch (error) {
+                addMessageToUI("Error: Failed to connect to backend API.", 'assistant-msg', 'bg-red-100 text-red-900 self-start');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Send';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        function addMessageToUI(text, msgTypeClass, colorClasses, parseMarkdown = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex items-start message ${msgTypeClass} w-full`;
+            
+            const innerDiv = document.createElement('div');
+            innerDiv.className = `p-3 rounded-lg max-w-[95%] w-fit prose ${colorClasses}`;
+            
+            if (parseMarkdown) {
+                innerDiv.innerHTML = marked.parse(text);
+            } else {
+                innerDiv.textContent = text;
+            }
+
+            msgDiv.appendChild(innerDiv);
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
